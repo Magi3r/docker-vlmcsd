@@ -1,6 +1,7 @@
-IMAGE_NAME ?= vlmcsd
-IMAGE_PORT ?= 1688
-RUNER      ?= docker
+IMAGE_NAME    ?= vlmcsd
+IMAGE_PORT    ?= 1688
+RUNER         ?= docker
+MANIFEST_NAME ?= vlmcsd-manifest
 
 .PHONY: all build help run test
 
@@ -12,7 +13,15 @@ build: $(PWD)/Dockerfile
 ifeq ($(wildcard /usr/bin/buildah),)
 	@$(RUNER) build --build-arg VERSION=$(version) -t $(IMAGE_NAME) .
 else
-	@buildah bud --build-arg VERSION=$(version) -t $(IMAGE_NAME) .
+	@buildah manifest create $(MANIFEST_NAME)
+	@buildah bud --build-arg VERSION=$(version) \
+				 --manifest ${MANIFEST_NAME} \
+   				 --arch amd64 \
+				 -t $(IMAGE_NAME) .
+	@buildah bud --build-arg VERSION=$(version) \
+				 --manifest ${MANIFEST_NAME} \
+   				 --arch arm64 \
+				 -t $(IMAGE_NAME) .
 endif
 
 help:
